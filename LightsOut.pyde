@@ -1,25 +1,49 @@
+from functools import reduce
+
 onOutline = color(245, 197, 66)
 onFill = color(245, 233, 66)
 offOutline = color(0, 0, 0)
 offFill = color(167, 167, 167)
 
-roundPos = [[[50,50], [150,150]]]
-roundLights = [[True, True]]
-roundEdges = [[[0,1]]]
 currRound = 0
+roundPos = [[ [50,50], [150,150] ], [ [50, 50], [150, 150], [300, 150] ]]
+roundLights = [[False, False], [False, False, False]]
+roundEdges = [ [ [0,1]  ], [ [0,1], [1,2] ] ]
 circleRadius = 30
+
+firstLoop = True
+
 
 def setup():
     size(500, 500)
 
 def draw():
   drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound])
+  checkWin()
 
+
+def checkWin():
+    global currRound, firstLoop
+    startFrameCount = -160
+    win = reduce((lambda x, y: x and y), roundLights[currRound])
+    if win:
+        if currRound+1 == len(roundPos):
+            drawTextScreen("Game complete!")
+        else:
+            drawTextScreen("Round " + str(currRound+1) + " complete!")
+        if firstLoop:
+            startFrameCount = frameCount
+            firstLoop = False
+        if frameCount > startFrameCount + 300:
+            if currRound+1 < len(roundPos):
+                currRound += 1
+                firstLoop = True
 
 '''
 Draw the graph with yellow circle at posArr[i] where lightOnArr[i] is True
 '''
-def drawGraph(posArr, lightOnArr, edgesArr):
+def drawGraph(posArr, lightOffArr, edgesArr):
+  background(color(200, 200, 200))
   
   stroke(color(0,0,0))
   for edge in edgesArr:
@@ -30,14 +54,20 @@ def drawGraph(posArr, lightOnArr, edgesArr):
     line(startX, startY, endX, endY);
 
   for i in range(0, len(posArr)):
-      if lightOnArr[i]:
-        stroke(onOutline)
-        fill(onFill)
-      else:
+      if lightOffArr[i]:
         stroke(offOutline)
         fill(offFill)
+      else:
+        stroke(onOutline)
+        fill(onFill)
         
       circle(posArr[i][0], posArr[i][1], circleRadius)
+
+def drawTextScreen(textStr):
+    background(color(64, 235, 52));
+    textSize(32);
+    fill(255, 255, 255);
+    text(textStr, 100, 250);
 
 def mouseClicked():
     within = checkPos(mouseX, mouseY)
