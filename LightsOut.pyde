@@ -43,6 +43,11 @@ def mouseClicked():
     within = checkPos(mouseX, mouseY)
     if within != -1:
         roundLights[currRound][within] = not roundLights[currRound][within]
+        for edge in roundEdges[currRound]:
+            if edge[0] == within:
+                roundLights[currRound][edge[1]] = not roundLights[currRound][edge[1]]
+            elif edge[1] == within:
+                roundLights[currRound][edge[0]] = not roundLights[currRound][edge[0]]
         print(roundLights[currRound])
     
     
