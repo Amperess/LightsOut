@@ -6,6 +6,10 @@ onFill = color(245, 233, 66)
 offOutline = color(0, 0, 0)
 offFill = color(167, 167, 167)
 
+greenColor = color(64, 235, 52)
+redColor = color(235, 7, 15)
+switchColor = greenColor
+
 # What round is the player currently on
 currRound = 0
 
@@ -23,6 +27,11 @@ roundPos = [
 
 # Whether the light is on or off in the current round
 roundLights = [[False]*len(i) for i in roundPos]
+
+# Whether the light switch has been hit at this light in the current round
+roundSwitches = [[False]*len(i) for i in roundPos]
+
+roundMinSwitches = [1, 1, 2, 2, 4, 2, 2, 5]
 
 # Which nodes have edges between them for each round
 roundEdges = [ 
@@ -49,7 +58,7 @@ def setup():
 
 # Every round, draw the current round graph and the text screen on top in case they've won
 def draw():
-    drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound])
+    drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound], roundSwitches[currRound])
     checkWin()
 
 # Check if the player has turned all the lights off in the current round
@@ -57,7 +66,7 @@ def checkWin():
     global currRound, firstLoop, startFrameCount
     
     # If the light is True, it is off. Check if all lights are True
-    win = reduce((lambda x, y: x and y), roundLights[currRound])
+    win = reduce((lambda x, y: x and y), roundLights[currRound], roundSwitches[currRound]) and roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]
     
     # Check the frame in which they win, then delay a bit, show win screen, delay a bit and move to the next stage
     if win:
@@ -76,7 +85,7 @@ def checkWin():
 
 
 # Draw the graph with circles at posArr, colored by lightsOffArr and connected by the edgesArr
-def drawGraph(posArr, lightOffArr, edgesArr):
+def drawGraph(posArr, lightOffArr, edgesArr, switchesArr):
   # Color the background gray
   background(color(200, 200, 200))
   
@@ -89,22 +98,33 @@ def drawGraph(posArr, lightOffArr, edgesArr):
     endY = posArr[edge[1]][1]
     line(startX, startY, endX, endY);
 
+  if roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]:
+      switchColor = greenColor
+  else:
+      switchColor = redColor
+
   # Draw the lights in the on or off color
   for i in range(0, len(posArr)):
       if lightOffArr[i]:
-        stroke(offOutline)
-        fill(offFill)
+          if switchesArr[i] == True:
+            stroke(switchColor)
+          else:
+            stroke(offOutline)
+          fill(offFill)
       else:
-        stroke(onOutline)
+        if switchesArr[i] == True:
+            stroke(switchColor)
+        else:
+            stroke(onOutline)
         fill(onFill)
       circle(posArr[i][0], posArr[i][1], circleRadius)
 
 # Draw a green colored screen with the parameter textStr displayed
 def drawTextScreen(textStr):
-    background(color(64, 235, 52));
-    textSize(32);
-    fill(255, 255, 255);
-    text(textStr, 100, 250);
+    background(color(64, 235, 52))
+    textSize(32)
+    fill(255, 255, 255)
+    text(textStr, 100, 250)
 
 # Handle mouse click event
 def mouseClicked():
@@ -114,16 +134,16 @@ def mouseClicked():
     
     # If they clicked on a legal node
     if within != -1:
-        
-        # Turn that light to it's opposite value and all lights it's connected to by an edge
+        # Turn that light to it's opposite value and all lights it's connected to by an edge, only switch the selected switch
         roundLights[currRound][within] = not roundLights[currRound][within]
+        roundSwitches[currRound][within] = not roundSwitches[currRound][within]
         for edge in roundEdges[currRound]:
             if edge[0] == within:
                 roundLights[currRound][edge[1]] = not roundLights[currRound][edge[1]]
             elif edge[1] == within:
                 roundLights[currRound][edge[0]] = not roundLights[currRound][edge[0]]
         # Redraw the updated graph
-        drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound])
+        drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound], roundSwitches[currRound])
     
 # Check if the mouse position x, y is within one of the nodes' radius
 def checkPos(x, y):
