@@ -89,6 +89,14 @@ def drawGraph(posArr, lightOffArr, edgesArr, switchesArr):
   # Color the background gray
   background(color(200, 200, 200))
   
+  # Draw reset button
+  fill(color(247, 190, 192))
+  stroke(color(0, 0, 0))
+  rect(430, 0, 70, 50)
+  fill(color(0, 0, 0))
+  textSize(20)
+  text("Reset", 440, 30)
+  
   # Draw edges in black
   stroke(color(0,0,0))
   for edge in edgesArr:
@@ -98,12 +106,13 @@ def drawGraph(posArr, lightOffArr, edgesArr, switchesArr):
     endY = posArr[edge[1]][1]
     line(startX, startY, endX, endY);
 
+  # Change switch outline color if they've exceeded the amound of switches allowed
   if roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]:
       switchColor = greenColor
   else:
       switchColor = redColor
 
-  # Draw the lights in the on or off color
+  # Draw the lights in the on or off color, with switch color if they were clicked on, otherwise default color
   for i in range(0, len(posArr)):
       if lightOffArr[i]:
           if switchesArr[i] == True:
@@ -124,26 +133,29 @@ def drawTextScreen(textStr):
     background(color(64, 235, 52))
     textSize(32)
     fill(255, 255, 255)
-    text(textStr, 100, 250)
+    text(textStr, 110, 250)
 
 # Handle mouse click event
 def mouseClicked():
     
-    #Check which node they clicked on
-    within = checkPos(mouseX, mouseY)
-    
-    # If they clicked on a legal node
-    if within != -1:
-        # Turn that light to it's opposite value and all lights it's connected to by an edge, only switch the selected switch
-        roundLights[currRound][within] = not roundLights[currRound][within]
-        roundSwitches[currRound][within] = not roundSwitches[currRound][within]
-        for edge in roundEdges[currRound]:
-            if edge[0] == within:
-                roundLights[currRound][edge[1]] = not roundLights[currRound][edge[1]]
-            elif edge[1] == within:
-                roundLights[currRound][edge[0]] = not roundLights[currRound][edge[0]]
-        # Redraw the updated graph
-        drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound], roundSwitches[currRound])
+    if mouseX >= 430 and mouseY < 30:
+        reset(currRound)
+    else:
+        #Check which node they clicked on
+        within = checkPos(mouseX, mouseY)
+        
+        # If they clicked on a legal node
+        if within != -1:
+            # Turn that light to it's opposite value and all lights it's connected to by an edge, only switch the selected switch
+            roundLights[currRound][within] = not roundLights[currRound][within]
+            roundSwitches[currRound][within] = not roundSwitches[currRound][within]
+            for edge in roundEdges[currRound]:
+                if edge[0] == within:
+                    roundLights[currRound][edge[1]] = not roundLights[currRound][edge[1]]
+                elif edge[1] == within:
+                    roundLights[currRound][edge[0]] = not roundLights[currRound][edge[0]]
+    # Redraw the updated graph
+    drawGraph(roundPos[currRound], roundLights[currRound], roundEdges[currRound], roundSwitches[currRound])
     
 # Check if the mouse position x, y is within one of the nodes' radius
 def checkPos(x, y):
@@ -151,4 +163,9 @@ def checkPos(x, y):
         if sqrt((x-roundPos[currRound][i][0])**2 + (y-roundPos[currRound][i][1])**2) < circleRadius:
             return i
     return -1
+
+# Reset round lights
+def reset(round):
+    roundLights[currRound] = [False]*len(roundPos[currRound])
+    roundSwitches[currRound] = [False]*len(roundPos[currRound])
             
