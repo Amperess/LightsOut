@@ -1,3 +1,4 @@
+import heapq
 from functools import reduce
 
 # Colors for off and on lights
@@ -22,7 +23,8 @@ roundPos = [
             [ [100, 100], [300, 100], [100, 200], [300, 200] ],
             [ [100, 100], [300, 100], [100, 200], [300, 200], [400, 200] ],
             [ [150, 150], [250, 100], [350, 150], [250, 200], [150, 200], [250, 150], [350, 200], [250, 250] ],
-            [ [50, 75], [125, 100], [200, 200], [250, 200], [325, 100], [400, 75], [50, 325], [125, 300], [325, 300], [400, 325] ]
+            [ [50, 75], [125, 100], [200, 200], [250, 200], [325, 100], [400, 75], [50, 325], [125, 300], [325, 300], [400, 325] ],
+            [ [100,100],[100,200],[100,300],[100,400],[200,200],[200,300],[200,400],[300,100],[300,200],[300,300],[300,400],[400,100],[400,200],[400,300],[400,400] ]
             ]
 
 # Whether the light is on or off in the current round
@@ -31,7 +33,8 @@ roundLights = [[False]*len(i) for i in roundPos]
 # Whether the light switch has been hit at this light in the current round
 roundSwitches = [[False]*len(i) for i in roundPos]
 
-roundMinSwitches = [1, 1, 2, 2, 4, 2, 2, 5]
+roundMinSwitches = [1, 1, 2, 2, 4, 2, 2, 5, 7]
+aStarMins = []
 
 # Which nodes have edges between them for each round
 roundEdges = [ 
@@ -42,7 +45,8 @@ roundEdges = [
               [ [0,1], [0,2], [2,3], [1,3] ],
               [ [0,1], [0,2], [2,3], [1,3], [3,4] ],
               [ [0,1], [1,2], [2,3], [0,3], [0,4], [1,5], [2,6], [3,7], [4,5], [5,6], [6,7], [4,7] ],
-              [ [0,1], [1,2], [2,3], [4,5], [6,7], [7,2], [3,8], [8,9], [1,7], [4,8], [3,4] ]
+              [ [0,1], [1,2], [2,3], [4,5], [6,7], [7,2], [3,8], [8,9], [1,7], [4,8], [3,4] ],
+              [ [0,1],[1,4],[4,8],[4,5],[5,9],[8,9],[7,11],[8,11],[11,12],[2,5],[3,2],[3,6],[5,6],[9,10],[10,14],[13,14] ]
               ]
 
 # How big to draw the lights
@@ -55,6 +59,12 @@ startFrameCount = -160
 # Make the canvas 500 x 500 pixels
 def setup():
     size(500, 500)
+    
+    for round in roundEdges:
+        aStarMins.append(aStar(round))
+    print("A star buttons " + str(aStarMins))
+    print("A star mins " + str([len(i) for i in aStarMins]))
+    print(roundMinSwitches)
 
 # Every round, draw the current round graph and the text screen on top in case they've won
 def draw():
@@ -66,7 +76,7 @@ def checkWin():
     global currRound, firstLoop, startFrameCount
     
     # If the light is True, it is off. Check if all lights are True
-    win = reduce((lambda x, y: x and y), roundLights[currRound], roundSwitches[currRound]) and roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]
+    win = reduce((lambda x, y: x and y), roundLights[currRound]) and roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]
     
     # Check the frame in which they win, then delay a bit, show win screen, delay a bit and move to the next stage
     if win:
@@ -168,4 +178,111 @@ def checkPos(x, y):
 def reset(round):
     roundLights[currRound] = [False]*len(roundPos[currRound])
     roundSwitches[currRound] = [False]*len(roundPos[currRound])
+    
+    
+def aStar(roundEdges):
+    edgesDict = {}
+    # Convert edge list into a dictionary for a node to the list of nodes it's connected to
+    for edge in roundEdges:
+            if edge[0] in edgesDict:
+                edgesDict[edge[0]].append(edge[1])
+            else:
+                edgesDict[edge[0]] = [edge[1]]
+                
+            if edge[1] in edgesDict:
+                edgesDict[edge[1]].append(edge[0])
+            else:
+                edgesDict[edge[1]] = [edge[0]]
+    
+    # The list of states that have been explored for easy checking
+    closedStatesList = []
+    
+    # The list of (state, predecessor, button) tuples that have already been explored
+    closedList = []
+    
+    # A heap sorted by (cost to get to this state + heuristic estimate to reach goal)
+    # Elements are (heap value, (state, predecessor))
+    openList = []
+    
+    # States explanation: The i-th digit represents if the i-th light is on(0) or off(1)
+    # Starting state: all are on
+    startingState = '0'*len(edgesDict)
+    endingState = '1'*len(edgesDict)
+    
+    # Append the starting state to the heap with (cost = 0, (state, predecessor = itself for tracing back later, button pressed)
+    openList.append(  ( 0, (startingState, startingState, -1) )  )
+    
+    # while there are still states to explore
+    while openList:
+        nextInfo = heapq.heappop(openList)
+        nextStateTuple = nextInfo[1]
+        closedStatesList.append(nextStateTuple[0])
+        closedList.append(nextStateTuple)
+        
+        # Pop the next smallest cost state and explore all not prev reached states that are reachable by pressing any button  
+        posStates = pushAllButtons(nextStateTuple[0], edgesDict, closedStatesList)
+        for state in posStates:
+            if state[0] == endingState:
+                buttons = []
+                traceState = state
+                while traceState[2] != -1: # this is true of the starting state
+                    # Add this button pressed to the list
+                    buttons.append(traceState[2])
+                    # Find the tuple of the pred of this state to find what button was pressed to get there
+                    traceState = findTuple(traceState[1], closedList)
+                return buttons
             
+            # cost = cost it took to reach this state + how much is estimated to take to reach the ending state
+            cost = nextInfo[0] + stateDiff(state[0], endingState)
+            heapq.heappush(openList, (cost, state))
+        
+'''
+In a certain state, give the next state when the specified button is pushed
+'''
+def pushButton(state, edges, button):
+    # lights should change for button pressed and it's adjacent lights
+    lightsToChange = [button]
+    lightsToChange.extend(edges[button])
+    
+    newState = []
+    
+    # Generate the changed state
+    for i in range(len(state)):
+        if i in lightsToChange:
+            if state[i] == "0":
+                newState.append("1")
+            else:
+                newState.append("0")
+        else:
+            newState.append(str(state[i]))
+    
+    return ''.join(newState)
+
+
+'''
+Return all states traversible from the currentState
+'''
+def pushAllButtons(state, edges, closedList):
+    posStates = []
+    
+    for node in edges:
+        nextState = pushButton(state, edges, node)
+        if not nextState in closedList:
+            posStates.append((nextState, state, node))
+                         
+    return posStates
+
+'''
+Find the tuple with the given state
+'''
+def findTuple(currState, closedTupleList):
+    for tuple in closedTupleList:
+        if tuple[0] == currState:
+            return tuple
+        
+'''
+Estimate how many lights need to be swapped to reach the ending state
+'''
+def stateDiff(state1, state2):
+    diffList = [1 for i in range(len(state1)) if state1[i]!=state2[i]]
+    return sum(diffList)
