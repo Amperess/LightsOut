@@ -11,20 +11,24 @@ greenColor = color(64, 235, 52)
 redColor = color(235, 7, 15)
 switchColor = greenColor
 
+# Board dimensions
+boardH = 500
+boardW = 500
+
 # What round is the player currently on
-currRound = 0
+currRound = 7
 
 # The positions of each light for each round
 roundPos = [
-            [ [50,50], [150,150] ], 
-            [ [50, 200], [100, 200], [150, 200] ],
-            [ [50, 200], [100, 200], [150, 200], [200, 200] ],
-            [ [50, 200], [100, 200], [150, 200], [200, 200], [250, 200] ],
-            [ [100, 100], [300, 100], [100, 200], [300, 200] ],
-            [ [100, 100], [300, 100], [100, 200], [300, 200], [400, 200] ],
-            [ [150, 150], [250, 100], [350, 150], [250, 200], [150, 200], [250, 150], [350, 200], [250, 250] ],
-            [ [50, 75], [125, 100], [200, 200], [250, 200], [325, 100], [400, 75], [50, 325], [125, 300], [325, 300], [400, 325] ],
-            [ [100,100],[100,200],[100,300],[100,400],[200,200],[200,300],[200,400],[300,100],[300,200],[300,300],[300,400],[400,100],[400,200],[400,300],[400,400] ]
+            [ [0.33, 0.33], [0.66, 0.66] ], 
+            [ [0.25, 0.5], [0.5, 0.5], [0.75, 0.5] ],
+            [ [1/5.0, 0.5], [2/5.0, 0.5], [3/5.0, 0.5], [4/5.0, 0.5] ],
+            [ [1/6.0, 0.5], [2/6.0, 0.5], [0.5, 0.5], [4/6.0, 0.5], [5/6.0, 0.5] ],
+            [ [.3, .33], [.7, .33], [.3, .6], [.7, 0.6] ],
+            [ [.25, .33], [.6, .33], [.25, .6], [.6, 0.6], [.8, 0.6] ],
+            [ [0.25, 0.4], [0.45, 0.3], [0.65, 0.4], [0.45, 0.5], [0.25, 0.5], [0.45, 0.4], [0.65, 0.5], [0.45, 0.6] ],
+            [ [0.15, 0.25], [0.3, 0.3], [0.45, 0.5], [0.55, 0.5], [0.7, 0.3], [0.85, 0.25], [0.15, 0.75], [0.3, 0.7], [0.7, 0.7], [0.85, 0.75] ],
+            [ [0.2, 0.2], [0.2, 0.4], [0.2, 0.6], [0.2, 0.8], [0.4, 0.4], [0.4, 0.6], [0.4, 0.8], [0.6, 0.2], [0.6, 0.4], [0.6, 0.6], [0.6, 0.8], [0.8, 0.2], [0.8, 0.4], [0.8, 0.6], [0.8, 0.8] ]
             ]
 
 # Whether the light is on or off in the current round
@@ -60,14 +64,21 @@ startFrameCount = -160
 Set canvas size and run A star to determine the minimum number of moves for all boards
 '''
 def setup():
-    size(500, 500)
+    size(boardH, boardW)
     
-    global aStarMins, roundMinSwitches
+    global aStarMins, roundMinSwitches, roundPos
     
     # For each round, run the A star algorithm to determine the fewest amount of buttons to press to win
     for round in roundEdges:
         aStarMins.append(aStar(round))
     roundMinSwitches = [len(i) for i in aStarMins]
+    
+    # Scaled all the positions to the size of the board
+    for round in roundPos:
+        for pos in round:
+            pos[0] = pos[0]*boardW
+            pos[1] = pos[1]*boardH
+        
 
 '''
 Every round draw the current lights graph and check if they've won to draw the winning text screen
