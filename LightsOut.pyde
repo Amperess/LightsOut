@@ -12,11 +12,11 @@ redColor = color(235, 7, 15)
 switchColor = greenColor
 
 # Board dimensions
-boardH = 500
-boardW = 500
+boardH = 550
+boardW = 550
 
 # What round is the player currently on
-currRound = 7
+currRound = 0
 
 # The positions of each light for each round
 roundPos = [
@@ -123,10 +123,10 @@ def drawGraph(posArr, lightOffArr, edgesArr, switchesArr):
   # Draw reset button
   fill(color(247, 190, 192))
   stroke(color(0, 0, 0))
-  rect(430, 0, 70, 50)
+  rect(9/10.0*boardW - 20, 1, 1/10.0*boardW+17, 1/20.0*boardH+3)
   fill(color(0, 0, 0))
   textSize(20)
-  text("Reset", 440, 30)
+  text("Reset", 9/10.0*boardW-5, 24)
   
   # Draw edges in black
   stroke(color(0,0,0))
@@ -166,14 +166,14 @@ def drawTextScreen(textStr):
     background(color(64, 235, 52))
     textSize(32)
     fill(255, 255, 255)
-    text(textStr, 110, 250)
+    text(textStr, .27*boardW, .5*boardH)
 
 '''
 When mouse is clicked identify if they clicked reset button or a specific light
 '''
 def mouseClicked():
     
-    if mouseX >= 430 and mouseY < 30:
+    if mouseX >= 9/10.0*boardW - 20 and mouseY < 1/20.0*boardH+3:
         reset(currRound)
     else:
         #Check which light node they clicked on
