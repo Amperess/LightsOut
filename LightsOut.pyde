@@ -107,6 +107,8 @@ def drawGraph(posArr, lightOffArr, edgesArr, switchesArr):
   # Color the background gray
   background(color(200, 200, 200))
   
+  strokeWeight(4)
+  
   # Draw reset button
   fill(color(247, 190, 192))
   stroke(color(0, 0, 0))
