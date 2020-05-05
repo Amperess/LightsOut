@@ -28,7 +28,9 @@ roundPos = [
             [ [.25, .33], [.6, .33], [.25, .6], [.6, 0.6], [.8, 0.6] ],
             [ [0.25, 0.4], [0.45, 0.3], [0.65, 0.4], [0.45, 0.5], [0.25, 0.5], [0.45, 0.4], [0.65, 0.5], [0.45, 0.6] ],
             [ [0.15, 0.25], [0.3, 0.3], [0.45, 0.5], [0.55, 0.5], [0.7, 0.3], [0.85, 0.25], [0.15, 0.75], [0.3, 0.7], [0.7, 0.7], [0.85, 0.75] ],
-            [ [0.2, 0.2], [0.2, 0.4], [0.2, 0.6], [0.2, 0.8], [0.4, 0.4], [0.4, 0.6], [0.4, 0.8], [0.6, 0.2], [0.6, 0.4], [0.6, 0.6], [0.6, 0.8], [0.8, 0.2], [0.8, 0.4], [0.8, 0.6], [0.8, 0.8] ]
+            [ [0.2, 0.2], [0.2, 0.4], [0.2, 0.6], [0.2, 0.8], [0.4, 0.4], [0.4, 0.6], [0.4, 0.8], [0.6, 0.2], [0.6, 0.4], [0.6, 0.6], [0.6, 0.8], [0.8, 0.2], [0.8, 0.4], [0.8, 0.6], [0.8, 0.8] ],
+            [ [4/8.0,1/10.0],[1/8.0,2/10.0],[7/8.0,2/10.0],[4/8.0,3/10.0],[1/8.0,4/10.0],[3/8.0,4/10.0],[5/8.0,4/10.0],[7/8.0,4/10.0],[2/8.0,5/10.0],[6/8.0,5/10.0],[1/8.0,6/10.0],[3/8.0,6/10.0],[5/8.0,6/10.0],[7/8.0,6/10.0],[4/8.0,7/10.0],[1/8.0,8/10.0],[7/8.0,8/10.0],[4/8.0,9/10.0] ],
+            [ [4/8.0,1/10.0],[1/8.0,2/10.0],[7/8.0,2/10.0],[4/8.0,3/10.0],[1/8.0,4/10.0],[3/8.0,4/10.0],[5/8.0,4/10.0],[7/8.0,4/10.0],[2/8.0,5/10.0],[6/8.0,5/10.0],[1/8.0,6/10.0],[3/8.0,6/10.0],[5/8.0,6/10.0],[7/8.0,6/10.0],[4/8.0,7/10.0],[1/8.0,8/10.0],[7/8.0,8/10.0],[4/8.0,9/10.0] ]
             ]
 
 # Whether the light is on or off in the current round
@@ -37,7 +39,6 @@ roundLights = [[False]*len(i) for i in roundPos]
 # Whether the light switch has been hit at this light in the current round
 roundSwitches = [[False]*len(i) for i in roundPos]
 
-roundMinSwitches = [1, 1, 2, 2, 4, 2, 2, 5, 7]
 aStarMins = [] # to be set by running aStar
 
 # Which nodes have edges between them for each round
@@ -50,7 +51,9 @@ roundEdges = [
               [ [0,1], [0,2], [2,3], [1,3], [3,4] ],
               [ [0,1], [1,2], [2,3], [0,3], [0,4], [1,5], [2,6], [3,7], [4,5], [5,6], [6,7], [4,7] ],
               [ [0,1], [1,2], [2,3], [4,5], [6,7], [7,2], [3,8], [8,9], [1,7], [4,8], [3,4] ],
-              [ [0,1],[1,4],[4,8],[4,5],[5,9],[8,9],[7,11],[8,11],[11,12],[2,5],[3,2],[3,6],[5,6],[9,10],[10,14],[13,14] ]
+              [ [0,1],[1,4],[4,8],[4,5],[5,9],[8,9],[7,11],[8,11],[11,12],[2,5],[3,2],[3,6],[5,6],[9,10],[10,14],[13,14] ],
+              [ [0,1],[0,2],[0,3],[1,4],[1,5],[3,5],[3,6],[2,6],[2,7],[6,9],[5,8],[4,8],[7,9],[8,10],[8,11],[9,12],[9,13],[10,15],[11,15],[11,14],[12,14],[12,16],[13,16],[14,17],[15,17],[16,17] ],
+              [ [0,1],[0,2],[0,3],[1,4],[1,5],[3,5],[3,6],[2,6],[2,7],[6,9],[5,8],[4,8],[7,9],[8,10],[8,11],[9,12],[9,13],[10,15],[11,15],[11,14],[12,14],[12,16],[13,16],[14,17],[15,17],[16,17],[8,9] ]
               ]
 
 # How big to draw the lights
@@ -70,8 +73,7 @@ def setup():
     
     # For each round, run the A star algorithm to determine the fewest amount of buttons to press to win
     for round in roundEdges:
-        aStarMins.append(aStar(round))
-    roundMinSwitches = [len(i) for i in aStarMins]
+        aStarMins.append(len(aStar(round)))
     
     # Scaled all the positions to the size of the board
     for round in roundPos:
@@ -94,7 +96,7 @@ def checkWin():
     global currRound, firstLoop, startFrameCount
     
     # If the light is True, it is off. Check if all lights are True
-    win = reduce((lambda x, y: x and y), roundLights[currRound]) and roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]
+    win = reduce((lambda x, y: x and y), roundLights[currRound]) and roundSwitches[currRound].count(True) <= aStarMins[currRound]
     
     # Check the frame in which they win, then delay a bit, show win screen, delay a bit and move to the next stage
     if win:
@@ -138,7 +140,7 @@ def drawGraph(posArr, lightOffArr, edgesArr, switchesArr):
     line(startX, startY, endX, endY);
 
   # Change switch outline color if they've exceeded the amound of switches allowed
-  if roundSwitches[currRound].count(True) <= roundMinSwitches[currRound]:
+  if roundSwitches[currRound].count(True) <= aStarMins[currRound]:
       switchColor = greenColor
   else:
       switchColor = redColor
@@ -274,6 +276,7 @@ def aStar(roundEdges):
                     buttons.append(traceState[2])
                     # Find the tuple of the pred of this state to find what button was pressed to get there
                     traceState = findTuple(traceState[1], closedList)
+                print(buttons)
                 return buttons
             
             # Otherwise add the state with the correct cost to the open list
